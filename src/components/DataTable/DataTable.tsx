@@ -1,56 +1,129 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Box from '@mui/material/Box';
-import { DataGrid, GridColDef, GridValueGetterParams } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRowSelectionModel } from '@mui/x-data-grid';
+import { serverCalls } from '../../api';
+import { useGetData } from '../../custom-hooks';
+import {
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle
+} from '@mui/material';
+import { DroneForm } from '../DroneForm'
+
 
 const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 90 },
     {
-        field: 'firstName',
-        headerName: 'First name',
+        field: 'name',
+        headerName: 'Name',
         width: 150,
         editable: true,
     },
     {
-        field: 'lastName',
-        headerName: 'Last name',
+        field: 'description',
+        headerName: 'Description',
         width: 150,
         editable: true,
     },
     {
-        field: 'age',
-        headerName: 'Age',
-        type: 'number',
+        field: 'price',
+        headerName: 'Price',
+        width: 110,
+        editable: true,
+        type: 'number'
+    },
+    {
+        field: 'camera_quality',
+        headerName: 'Camera Quality',
+        width: 160
+    },
+
+    {
+        field: 'flight_time',
+        headerName: 'Flight Time',
+        width: 110,
+        editable: true
+    },
+
+    {
+        field: 'max_speed',
+        headerName: 'Max Speed',
         width: 110,
         editable: true,
     },
+
     {
-        field: 'fullName',
-        headerName: 'Full name',
-        description: 'This column has a value getter and is not sortable.',
-        sortable: false,
-        width: 160,
-        valueGetter: (params: GridValueGetterParams) =>
-            `${params.row.firstName || ''} ${params.row.lastName || ''}`,
+        field: 'dimensions',
+        headerName: 'Dimensions',
+        width: 110,
+        editable: true,
     },
+
+    {
+        field: 'weight',
+        headerName: 'Weight',
+        width: 110,
+        editable: true,
+    },
+
+    {
+        field: 'cost_of_production',
+        headerName: 'Cost of Production',
+        width: 110,
+        editable: true,
+        type: 'number'
+    },
+
+    {
+        field: 'series',
+        headerName: 'Series',
+        width: 110,
+        editable: true,
+
+    },
+
+    {
+        field: 'random_joke',
+        headerName: 'Dad Joke',
+        width: 1000,
+        editable: true,
+
+    }
 ];
 
-const rows = [
-    { id: 1, lastName: 'Snow', firstName: 'Jon', age: 35 },
-    { id: 2, lastName: 'Lannister', firstName: 'Cersei', age: 42 },
-    { id: 3, lastName: 'Lannister', firstName: 'Jaime', age: 45 },
-    { id: 4, lastName: 'Stark', firstName: 'Arya', age: 16 },
-    { id: 5, lastName: 'Targaryen', firstName: 'Daenerys', age: null },
-    { id: 6, lastName: 'Melisandre', firstName: null, age: 150 },
-    { id: 7, lastName: 'Clifford', firstName: 'Ferrara', age: 44 },
-    { id: 8, lastName: 'Frances', firstName: 'Rossini', age: 36 },
-    { id: 9, lastName: 'Roxie', firstName: 'Harvey', age: 65 },
-];
+interface gridData {
+    data: {
+        id?: string
+    }
+}
 
-export const DataTable = () =>{
+export const DataTable = () => {
+    let { droneData, getData } = useGetData()
+    let [open, setOpen] = useState(false)
+    let [gridData, setData] = useState<GridRowSelectionModel>([])
+
+    const handleOpen = () => {
+        setOpen(true)
+    }
+
+    const handleClose = () => {
+        setOpen(false)
+    }
+
+    const deleteData = () => {
+        serverCalls.delete(`${gridData[0]}`)
+        getData()
+    }
+
+    console.log(gridData) // list of ids' from checked rows
     return (
         <Box sx={{ height: 400, width: '100%' }}>
+            <h2>Drones in Inventory</h2>
             <DataGrid
-                rows={rows}
+                rows={droneData}
                 columns={columns}
                 initialState={{
                     pagination: {
@@ -61,8 +134,22 @@ export const DataTable = () =>{
                 }}
                 pageSizeOptions={[5]}
                 checkboxSelection
-                disableRowSelectionOnClick
+                onRowSelectionModelChange={(newSelectionModel) => { setData(newSelectionModel) }}
+                {...droneData}
             />
+            <Button onClick={handleOpen}>Update</Button>
+            <Button variant="contained" color="secondary" onClick={deleteData}>Delete</Button>
+            {/* Dialog Pop Up for Updating a Drone */}
+            <Dialog open={open} onClose={handleClose} aria-labelledby='form-dialog-title'>
+                <DialogTitle id="form-dialog-title">Update a Drone</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>Drone id: {gridData[0]}</DialogContentText>
+                    <DroneForm id={`${gridData[0]}`} />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleClose} color="primary">Cancel</Button>
+                </DialogActions>
+            </Dialog>
         </Box>
-    )
+    );
 }
